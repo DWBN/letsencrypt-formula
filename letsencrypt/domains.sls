@@ -3,6 +3,8 @@
 
 {% from "letsencrypt/map.jinja" import letsencrypt with context %}
 
+include:
+  - haproxy.service
 
 /usr/local/bin/check_letsencrypt_cert.sh:
   file.managed:
@@ -25,6 +27,20 @@
 
 {%- if letsencrypt.standalone -%}
 
+incron:
+  pkg.installed:
+    - name: incron
+
+
+
+/etc/incron.allow:
+  file.managed:
+    - require:
+      - pkg: incron
+    - contents:
+      - root
+
+
 
 {%
   for setname, domainlist in salt['pillar.get'](
@@ -32,23 +48,25 @@
   ).iteritems()
 %}
 
+
 create-initial-cert-{{ setname }}-{{ domainlist | join('+') }}:
   cmd.run:
     - unless: /usr/local/bin/check_letsencrypt_cert.sh {{ domainlist|join(' ') }}
     - name: {{
           letsencrypt.cli_install_dir
-        }}/letsencrypt-auto -d {{ domainlist|join(' -d ') }} certonly --http-01-port 63443
+        }}/letsencrypt-auto -d {{ domainlist|join(' -d ') }} certonly --http-01-port 63443 && for i in {{ domainlist|join(' ') }}; do cd /etc/letsencrypt/live/$i && cat fullchain.pem privkey.pem > /etc/haproxy/certs/$i.pem; done && service haproxy reload
     - cwd: {{ letsencrypt.cli_install_dir }}
     - require:
       - file: letsencrypt-config
       - file: /usr/local/bin/check_letsencrypt_cert.sh
-
+    - stateful: True
 
 letsencrypt-crontab-{{ setname }}-{{ domainlist[0] }}:
   cron.present:
     - name: /usr/local/bin/check_letsencrypt_cert.sh {{ domainlist|join(' ') }} > /dev/null ||{{
           letsencrypt.cli_install_dir
         }}/letsencrypt-auto -d {{ domainlist|join(' -d ') }} certonly  --http-01-port 63443
+        && for i in {{ domainlist|join(' ') }}; do cd /etc/letsencrypt/live/$i && cat fullchain.pem privkey.pem > /etc/haproxy/certs/$i.pem; done && service haproxy reload
     - month: '*'
     - minute: random
     - hour: random
