@@ -31,7 +31,7 @@
 create-initial-cert-{{ setname }}-{{ domainlist | join('+') }}:
   cmd.run:
     - unless: /usr/local/bin/check_letsencrypt_cert.sh {{ domainlist|join(' ') }}
-    {%- if standalone -%}
+    {%- if letsencrypt.standalone -%}
     - name: {{
           letsencrypt.cli_install_dir
         }}/letsencrypt-auto -d {{ domainlist|join(' -d ') }} certonly --http-01-port 63443
