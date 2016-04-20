@@ -28,22 +28,40 @@
   ).iteritems()
 %}
 
+{%- if letsencrypt.standalone -%}
 create-initial-cert-{{ setname }}-{{ domainlist | join('+') }}:
   cmd.run:
     - unless: /usr/local/bin/check_letsencrypt_cert.sh {{ domainlist|join(' ') }}
-    {%- if letsencrypt.standalone -%}
     - name: {{
           letsencrypt.cli_install_dir
         }}/letsencrypt-auto -d {{ domainlist|join(' -d ') }} certonly --http-01-port 63443
-    {%- else -%}
     - name: {{
           letsencrypt.cli_install_dir
         }}/letsencrypt-auto -d {{ domainlist|join(' -d ') }} certonly
-    {%- endif -%}
     - cwd: {{ letsencrypt.cli_install_dir }}
     - require:
       - file: letsencrypt-config
       - file: /usr/local/bin/check_letsencrypt_cert.sh
+
+{%- else -%}
+
+create-initial-cert-{{ setname }}-{{ domainlist | join('+') }}:
+  cmd.run:
+    - unless: /usr/local/bin/check_letsencrypt_cert.sh {{ domainlist|join(' ') }}
+    - name: {{
+          letsencrypt.cli_install_dir
+        }}/letsencrypt-auto -d {{ domainlist|join(' -d ') }} certonly
+    - name: {{
+          letsencrypt.cli_install_dir
+        }}/letsencrypt-auto -d {{ domainlist|join(' -d ') }} certonly
+    - cwd: {{ letsencrypt.cli_install_dir }}
+    - require:
+      - file: letsencrypt-config
+      - file: /usr/local/bin/check_letsencrypt_cert.sh
+
+
+    {%- endif -%}
+
 
 letsencrypt-crontab-{{ setname }}-{{ domainlist[0] }}:
   cron.present:
