@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 # vim: ft=sls
 
+{% set haproxyreload = {
+    'xenial': 'systemctl reload haproxy',
+    'trusty': 'service haproxy reload',
+}.get(grains.oscodename) %}
+
 {% from "letsencrypt/map.jinja" import letsencrypt with context %}
 
 include:
@@ -40,7 +45,7 @@ create-initial-cert-{{ setname }}-{{ domainlist | join('+') }}:
     - unless: /usr/local/bin/check_letsencrypt_cert.sh {{ domainlist|join(' ') }}
     - name: {{
           letsencrypt.cli_install_dir
-        }}/letsencrypt-auto --no-self-upgrade -d {{ domainlist|join(' -d ') }} certonly --http-01-port 63443 && cat /etc/letsencrypt/live/{{ setname }}/fullchain.pem /etc/letsencrypt/live/{{ setname }}/privkey.pem > /etc/haproxy/certs/{{ setname }}.pem && service haproxy reload
+        }}/letsencrypt-auto --no-self-upgrade -d {{ domainlist|join(' -d ') }} certonly --http-01-port 63443 && cat /etc/letsencrypt/live/{{ setname }}/fullchain.pem /etc/letsencrypt/live/{{ setname }}/privkey.pem > /etc/haproxy/certs/{{ setname }}.pem && {{ haproxyreload }} 
     - cwd: {{ letsencrypt.cli_install_dir }}
     - require:
       - file: letsencrypt-config
@@ -51,7 +56,7 @@ letsencrypt-crontab-{{ setname }}-{{ domainlist[0] }}:
     - name: /usr/local/bin/check_letsencrypt_cert.sh {{ domainlist|join(' ') }} > /dev/null ||{{
           letsencrypt.cli_install_dir
         }}/letsencrypt-auto --no-self-upgrade -d {{ domainlist|join(' -d ') }} certonly  --http-01-port 63443
-        && cat /etc/letsencrypt/live/{{ setname }}/fullchain.pem /etc/letsencrypt/live/{{ setname }}/privkey.pem > /etc/haproxy/certs/{{ setname }}.pem && service haproxy reload
+        && cat /etc/letsencrypt/live/{{ setname }}/fullchain.pem /etc/letsencrypt/live/{{ setname }}/privkey.pem > /etc/haproxy/certs/{{ setname }}.pem &&{{ haproxyreload }} 
     - month: '*'
     - minute: random
     - hour: random
