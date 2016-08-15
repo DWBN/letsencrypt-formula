@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 # vim: ft=sls
 
+{% set haproxyreload = {
+    'xenial': 'systemctl reload haproxy',
+    'trusty': 'service haproxy reload',
+}.get(grains.oscodename) %}
 
 {% from "letsencrypt/map.jinja" import letsencrypt with context %}
 
-
+include:
+  - haproxy.service
 
 /usr/local/bin/check_letsencrypt_cert.sh:
   file.managed:
@@ -26,15 +31,6 @@
 
 
 {%- if letsencrypt.standalone -%}
-
-include:
-  - haproxy.service
-
-{% set haproxyreload = {
-    'xenial': 'systemctl reload haproxy',
-    'trusty': 'service haproxy reload',
-}.get(grains.oscodename) %}
-
 
 
 {%
