@@ -93,7 +93,7 @@ letsencrypt-crontab-{{ setname }}-{{ domainlist[0] }}:
   cron.present:
     - name: /usr/local/bin/check_letsencrypt_cert.sh {{ domainlist|join(' ') }} > /dev/null ||{{
           letsencrypt.cli_install_dir
-        }}/letsencrypt-auto --no-self-upgrade --quiet-d {{ domainlist|join(' -d ') }} certonly
+        }}/letsencrypt-auto --no-self-upgrade --quiet -d {{ domainlist|join(' -d ') }} certonly
     - month: '*'
     - minute: random
     - hour: random
