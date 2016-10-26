@@ -45,7 +45,7 @@ create-initial-cert-{{ setname }}-{{ domainlist | join('+') }}:
     - unless: /usr/local/bin/check_letsencrypt_cert.sh {{ domainlist|join(' ') }}
     - name: {{
           letsencrypt.cli_install_dir
-        }}/letsencrypt-auto --no-self-upgrade -d {{ domainlist|join(' -d ') }} certonly --http-01-port 63443 && cat /etc/letsencrypt/live/{{ setname }}/fullchain.pem /etc/letsencrypt/live/{{ setname }}/privkey.pem > /etc/haproxy/certs/{{ setname }}.pem && {{ haproxyreload }} 
+        }}/letsencrypt-auto --no-self-upgrade --quiet -d {{ domainlist|join(' -d ') }} certonly --http-01-port 63443 && cat /etc/letsencrypt/live/{{ setname }}/fullchain.pem /etc/letsencrypt/live/{{ setname }}/privkey.pem > /etc/haproxy/certs/{{ setname }}.pem && {{ haproxyreload }} 
     - cwd: {{ letsencrypt.cli_install_dir }}
     - require:
       - file: letsencrypt-config
@@ -55,7 +55,7 @@ letsencrypt-crontab-{{ setname }}-{{ domainlist[0] }}:
   cron.present:
     - name: /usr/local/bin/check_letsencrypt_cert.sh {{ domainlist|join(' ') }} > /dev/null ||{{
           letsencrypt.cli_install_dir
-        }}/letsencrypt-auto --no-self-upgrade -d {{ domainlist|join(' -d ') }} certonly  --http-01-port 63443
+        }}/letsencrypt-auto --no-self-upgrade --quiet -d {{ domainlist|join(' -d ') }} certonly  --http-01-port 63443
         && cat /etc/letsencrypt/live/{{ setname }}/fullchain.pem /etc/letsencrypt/live/{{ setname }}/privkey.pem > /etc/haproxy/certs/{{ setname }}.pem &&{{ haproxyreload }} 
     - month: '*'
     - minute: random
@@ -80,7 +80,7 @@ create-initial-cert-{{ setname }}-{{ domainlist | join('+') }}:
     - unless: /usr/local/bin/check_letsencrypt_cert.sh {{ domainlist|join(' ') }}
     - name: {{
           letsencrypt.cli_install_dir
-        }}/letsencrypt-auto --no-self-upgrade -d {{ domainlist|join(' -d ') }} certonly
+        }}/letsencrypt-auto --no-self-upgrade --quiet -d {{ domainlist|join(' -d ') }} certonly
     - cwd: {{ letsencrypt.cli_install_dir }}
     - require:
       - file: letsencrypt-config
@@ -93,7 +93,7 @@ letsencrypt-crontab-{{ setname }}-{{ domainlist[0] }}:
   cron.present:
     - name: /usr/local/bin/check_letsencrypt_cert.sh {{ domainlist|join(' ') }} > /dev/null ||{{
           letsencrypt.cli_install_dir
-        }}/letsencrypt-auto --no-self-upgrade -d {{ domainlist|join(' -d ') }} certonly
+        }}/letsencrypt-auto --no-self-upgrade --quiet-d {{ domainlist|join(' -d ') }} certonly
     - month: '*'
     - minute: random
     - hour: random
