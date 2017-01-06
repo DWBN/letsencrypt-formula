@@ -1,15 +1,9 @@
 # -*- coding: utf-8 -*-
 # vim: ft=sls
 
-{% set haproxyreload = {
-    'xenial': 'systemctl reload haproxy',
-    'trusty': 'service haproxy reload',
-}.get(grains.oscodename) %}
 
 {% from "letsencrypt/map.jinja" import letsencrypt with context %}
 
-include:
-  - haproxy.service
 
 /usr/local/bin/check_letsencrypt_cert.sh:
   file.managed:
@@ -31,6 +25,15 @@ include:
 
 
 {%- if letsencrypt.haproxy -%}
+
+{% set haproxyreload = {
+    'xenial': 'systemctl reload haproxy',
+    'trusty': 'service haproxy reload',
+}.get(grains.oscodename) %}
+
+
+include:
+  - haproxy.service
 
 
 {%
@@ -55,7 +58,7 @@ letsencrypt-crontab-{{ setname }}-{{ domainlist[0] }}:
   cron.present:
     - name: /usr/local/bin/check_letsencrypt_cert.sh {{ domainlist|join(' ') }} > /dev/null ||{{
           letsencrypt.cli_install_dir
-        }}/letsencrypt-auto --no-self-upgrade --quiet -d {{ domainlist|join(' -d ') }} certonly  
+        }}/letsencrypt-auto --no-self-upgrade --quiet -d {{ domainlist|join(' -d ') }} certonly
         && cat /etc/letsencrypt/live/{{ setname }}/fullchain.pem /etc/letsencrypt/live/{{ setname }}/privkey.pem > /etc/haproxy/certs/{{ setname }}.pem &&{{ haproxyreload }}
     - month: '*'
     - minute: random
